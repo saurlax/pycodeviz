@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from .parser import ProjectAnalyzer
 from .visualizer import Visualizer
-
+from .complexity_analyzer import ComplexityAnalyzer
 
 def main():
     parser = argparse.ArgumentParser(
@@ -52,6 +52,11 @@ def main():
         action="store_true",
         help="Generate all visualizations"
     )
+    parser.add_argument(
+        "--complexity",
+        action="store_true",
+        help="Generate code complexity report"
+    )
 
     args = parser.parse_args()
 
@@ -76,7 +81,7 @@ def main():
     visualizer = Visualizer(functions, classes)
 
     # Generate requested visualizations
-    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow
+    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow or args.complexity
 
     if args.all or args.call_graph:
         visualizer.generate_call_graph(str(output_dir / "call_graph.svg"))
@@ -93,6 +98,10 @@ def main():
             max_depth=args.depth,
             output_path=str(output_dir / "execution_flow.svg")
         )
+    
+    if args.complexity:
+        analyzer = ComplexityAnalyzer()
+        analyzer.analyze(project_path, output_dir / "complexity_report.txt")
 
     if not should_generate:
         print("\nNo visualization options specified. Use --help for available options.")

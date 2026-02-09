@@ -32,6 +32,9 @@ uv run pycodeviz examples --flow mymodule:main
 # 指定流程深度
 uv run pycodeviz examples --flow mymodule:main --depth 10
 
+#生成代码复杂度分析报告
+uv run pycodeviz examples --complexity
+
 # 指定输出目录
 uv run pycodeviz examples --all --output-dir ./visualizations
 ```
