@@ -9,6 +9,8 @@ PyCodeViz 是一个强大的Python项目代码分析和可视化工具，帮助�
 - **函数层级树** - 按模块组织的函数结构
 - **执行流程图** - 从指定入口点生成调用流程树
 - **代码分析** - 使用AST解析，提取类、函数、参数信息
+- **代码复杂度分析** - 生成函数级别的圈复杂度报告
+- **HTML 报告** - 生成嵌入 SVG 图表和元数据的自包含 HTML 报告
 - **文件过滤** - 通过 `--exclude` / `--include` 灵活选择分析范围
 - **多格式输出** - 支持 SVG、PNG、PDF 输出格式
 - **图规模预览** - 生成前提示节点/边数量
@@ -64,6 +66,12 @@ uv run pycodeviz examples --flow mymodule:main --depth 10
 #生成代码复杂度分析报告
 uv run pycodeviz examples --complexity
 
+# 生成 HTML 报告（默认输出 report.html）
+uv run pycodeviz examples --report
+
+# 生成 HTML 报告到指定文件名
+uv run pycodeviz examples --report my_report.html
+
 # 指定输出目录
 uv run pycodeviz examples --all --output-dir ./visualizations
 ```
@@ -109,6 +117,29 @@ uv run pycodeviz . --all --verbose
 ```
 
 默认情况下，解析失败的文件仅列出路径；加上 `--verbose` 后会显示具体的错误原因（如语法错误行号、编码问题等）。
+
+### HTML 报告
+
+通过 `--report` 生成一份自包含的 HTML 报告，报告中嵌入了所有 SVG 可视化图表和项目元数据：
+
+```bash
+# 生成默认的 report.html
+uv run pycodeviz . --report
+
+# 指定输出文件名
+uv run pycodeviz . --report analysis.html
+
+# 结合输出目录
+uv run pycodeviz . --report --output-dir ./reports
+```
+
+报告包含：
+- **项目概览** — 分析文件数、函数/类/模块数量、图规模等元数据
+- **函数调用图** — 嵌入的 SVG 交互图
+- **模块依赖图** — 嵌入的 SVG 交互图
+- **函数层级树** — 嵌入的 SVG 交互图
+- **代码复杂度表** — 按复杂度排序的函数列表，带颜色标签
+- **失败文件列表** — 解析失败的文件及错误原因
 
 ### 图规模预览
 

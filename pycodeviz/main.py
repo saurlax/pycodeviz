@@ -5,6 +5,7 @@ from pathlib import Path
 from .parser import ProjectAnalyzer
 from .complexity_analyzer import ComplexityAnalyzer
 from .visualizer import Visualizer, check_graphviz_installed, graphviz_install_hint, SUPPORTED_FORMATS
+from .report import ReportGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,13 @@ def main():
         help="Output format for visualizations (default: svg)"
     )
     parser.add_argument(
+        "--report",
+        nargs="?",
+        const="report.html",
+        metavar="FILE",
+        help="Generate a self-contained HTML report with embedded SVG and metadata (default: report.html)"
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose output with detailed error messages for failed files"
@@ -104,7 +112,7 @@ def main():
         sys.exit(1)
 
     # ── Check Graphviz installation ────────────────────────────────────
-    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow
+    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow or args.report
     if should_generate and not check_graphviz_installed():
         print(graphviz_install_hint())
         sys.exit(1)
@@ -150,7 +158,7 @@ def main():
     visualizer = Visualizer(functions, classes, output_format=args.output_format)
 
     # Generate requested visualizations
-    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow or args.complexity
+    should_generate = args.all or args.call_graph or args.module_graph or args.hierarchy or args.flow or args.complexity or args.report
     # ── Graph scale preview ────────────────────────────────────────────
     if should_generate:
         stats = visualizer.get_graph_stats()
@@ -182,8 +190,27 @@ def main():
         )
 
     if args.complexity:
-        analyzer = ComplexityAnalyzer()
-        analyzer.analyze(project_path, output_dir / "complexity_report.txt")
+        complexity_analyzer = ComplexityAnalyzer()
+        complexity_analyzer.analyze(project_path, output_dir / "complexity_report.txt")
+
+    if args.report:
+        report_path = output_dir / args.report
+        report_gen = ReportGenerator(
+            functions=functions,
+            classes=classes,
+            project_path=project_path,
+            analyzed_files=analyzer.analyzed_files,
+            failed_files=analyzer.failed_files,
+        )
+        report_gen.generate(
+            str(report_path),
+            call_graph=True,
+            module_graph=True,
+            hierarchy=True,
+            flow_entry=args.flow if args.flow else None,
+            flow_depth=args.depth,
+            include_complexity=True,
+        )
 
     if not should_generate:
         print("\nNo visualization options specified. Use --help for available options.")
@@ -193,6 +220,8 @@ def main():
         print("  pycodeviz . --flow mymodule:main           # Generate execution flow from entry point")
         print("  pycodeviz . --all --format png             # Output as PNG")
         print("  pycodeviz . --all --exclude 'test_*'       # Exclude test files")
+        print("  pycodeviz . --report                       # Generate HTML report")
+        print("  pycodeviz . --report my_report.html         # Specify report filename")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ __version__ = "0.1.0"
 
 from .parser import ProjectAnalyzer, CodeAnalyzer, FunctionInfo, ClassInfo
 from .visualizer import Visualizer, CallGraph
+from .report import ReportGenerator
 
 __all__ = [
     "ProjectAnalyzer",
@@ -20,4 +21,5 @@ __all__ = [
     "ClassInfo",
     "Visualizer",
     "CallGraph",
+    "ReportGenerator",
 ]
