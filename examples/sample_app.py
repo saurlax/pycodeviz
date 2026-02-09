@@ -4,7 +4,7 @@
 class DatabaseConnection:
     """Database connection manager"""
     
-    def __init__(self, host: str, port: int):
+    def __init__gi(self, host: str, port: int):
         self.host = host
         self.port = port
     
@@ -115,5 +115,20 @@ def main():
     print(f"Login result: {result}")
 
 
+def test_bare_except():
+    """Test function with dangerous 'except: pass' pattern"""
+    try:
+        print("Doing something risky...")
+        1 / 0
+    except:  # ← Bare except
+        pass  # ← This will be caught by your detector!
+
+def test_unused():
+    '''Test function with unused variable'''
+    used = "ok"
+    unused_var = 42  # ← this will be detected
+    print(used)
+
 if __name__ == "__main__":
     main()
+

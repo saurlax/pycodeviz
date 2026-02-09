@@ -39,20 +39,59 @@ class CodeAnalyzer(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         func_id = f"{self.module_name}:{self.current_scope}.{node.name}" if self.current_scope else f"{self.module_name}:{node.name}"
-        
         func_info = FunctionInfo(
-            name=node.name,
-            module=self.module_name,
-            lineno=node.lineno,
-            args=[arg.arg for arg in node.args.args]
+        name=node.name,
+        module=self.module_name,
+        lineno=node.lineno,
+        args=[arg.arg for arg in node.args.args]
         )
-        
         self.functions[func_id] = func_info
-        
         prev_function = self.current_function
         self.current_function = func_id
+        old_defined = getattr(self, '_defined_vars', set())
+        old_used = getattr(self, '_used_vars', set())
+    
+        self._defined_vars = set()
+        self._used_vars = set()
+        for arg in node.args.args:
+            self._defined_vars.add(arg.arg)
+
+       
         self.generic_visit(node)
+
+        
+        ignored_names = {"self", "cls"}
+        unused = {
+        v for v in (self._defined_vars - self._used_vars)
+        if not v.startswith('_') and v not in ignored_names
+        }
+        
+        if unused:
+            print(f"\033[93m[QUALITY] Unused variables in '{node.name}': {', '.join(sorted(unused))}\033[0m")
+
+       
+        self._defined_vars = old_defined
+        self._used_vars = old_used
         self.current_function = prev_function
+
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """Record assigned variables"""
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self._defined_vars.add(target.id)
+            elif isinstance(target, ast.Tuple):
+                for elt in target.elts:
+                    if isinstance(elt, ast.Name):
+                        self._defined_vars.add(elt.id)
+        self.generic_visit(node)
+
+    def visit_Name(self, node: ast.Name) -> None:
+        """Record used variables (only loads)"""
+        if isinstance(node.ctx, ast.Load):
+            if hasattr(self, '_used_vars'):
+                self._used_vars.add(node.id)
+        self.generic_visit(node)
 
     def visit_ExceptHandler(self, node):
      """Detect dangerous empty 'except:' blocks"""
