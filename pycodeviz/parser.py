@@ -10,7 +10,7 @@ class FunctionInfo:
     """Function metadata"""
     name: str
     module: str
-    lineno: int
+    lineno: int 
     calls: Set[str] = field(default_factory=set)
     called_by: Set[str] = field(default_factory=set)
     args: List[str] = field(default_factory=list)
@@ -27,6 +27,7 @@ class ClassInfo:
 
 
 class CodeAnalyzer(ast.NodeVisitor):
+    
     """AST visitor to extract code structure and call relationships"""
 
     def __init__(self, module_name: str):
@@ -52,6 +53,15 @@ class CodeAnalyzer(ast.NodeVisitor):
         self.current_function = func_id
         self.generic_visit(node)
         self.current_function = prev_function
+
+    def visit_ExceptHandler(self, node):
+     """Detect dangerous empty 'except:' blocks"""
+     if len(node.body) == 0:
+        print(f"\033[91m[SECURITY] Empty except at line {node.lineno}\033[0m")
+     elif len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
+        print(f"\033[91m[SECURITY] 'except: pass' at line {node.lineno} (swallows all errors!)\033[0m")
+     self.generic_visit(node)
+
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self.visit_FunctionDef(node)
@@ -108,6 +118,7 @@ class CodeAnalyzer(ast.NodeVisitor):
         elif isinstance(node, ast.Attribute):
             return f"{self._get_name(node.value)}.{node.attr}"
         return ""
+
 
 
 class ProjectAnalyzer:
